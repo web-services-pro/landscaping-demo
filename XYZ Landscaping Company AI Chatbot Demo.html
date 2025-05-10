@@ -1,0 +1,462 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XYZ Landscaping Company Demo - AI Chatbot</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1d4ed8;
+            --border-color: #e5e7eb;
+        }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: #f9fafb;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            max-height: 100vh;
+            margin: auto;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        #chat-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+        
+        #chat-header img {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        #chat-header h2 {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            margin: 0;
+        }
+        
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            margin-top: 4.5rem;
+            margin-bottom: 4.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            scroll-behavior: smooth;
+        }
+        
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            max-width: 85%;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+            margin-left: auto;
+        }
+        
+        .message-content {
+            background: #f3f4f6;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-size: clamp(1rem, 3.5vw, 1.2rem);
+        }
+        
+        .message.bot .message-content {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .avatar {
+            width: clamp(2rem, 8vw, 2.5rem);
+            height: clamp(2rem, 8vw, 2.5rem);
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        #input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            min-width: 0;
+            transition: border-color 0.2s ease;
+            background: white;
+            -webkit-appearance: none;font-size: 16px;
+        }
+        
+        #user-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        #send-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            min-width: clamp(4rem, 15vw, 5rem);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        #send-button:hover {
+            background: var(--secondary-color);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            background: #f3f4f6;
+            border-radius: 12px;
+            width: fit-content;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        
+        @media (max-width: 480px) {
+            #chat-container {
+                border-radius: 0;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+            
+            #input-area {
+                padding: 0.75rem;
+            }
+            .message-content {
+        font-size: 1.1rem;
+        padding: 0.875rem 1.125rem;
+    }
+        }
+        
+        /* For landscape orientation on mobile devices */
+        @media (max-height: 480px) and (orientation: landscape) {
+            #chat-header {
+                padding: 0.5rem 1rem;
+            }
+            
+            #chat-header img {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            #messages {
+                margin-top: 3.5rem;
+                margin-bottom: 3.5rem;
+                padding: 0.75rem;
+            }
+            
+            #input-area {
+                padding: 0.5rem;
+            }
+        }
+        @media screen and (max-width: 480px) {
+            input, select, textarea {
+                font-size: 16px; 
+            }
+            
+            #send-button {
+                font-size: 16px; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">
+            <img src="https://st.depositphotos.com/1006018/4135/v/450/depositphotos_41350749-stock-illustration-gardener-landscaper-shovel-front-retro.jpg" alt="Bot Avatar">
+            <h2>XYZ Landscaping Company Demo</h2>
+        </div>
+        <div id="messages"></div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const user_image = atob('c2stcHJvai1zbXV4WlA0NjhrWk9PbU4wWURPcnJqbk53SGhSSFhVNnZMYmp5Z3I3czdHcWtRcXZxUFdfalV2Z19GLWxBWmZJUzlISFBOMEk1VlQzQmxia0ZKbUtjdHQxMXFGdm9DTFNFNXNIYjBjOHJZZXpwQzdTelhLMnZTQ3BBX1NnMF9uZHBPUmVWMlU4QTJaSDV2UHgwbURfSXJhR1VSVUE=');
+        const INSTRUCTIONS = `###Core Persona and Training: You are Sam, a professional Sales Specialist with expertise in lead qualification and conversion techniques (e.g., consultative selling, GAP selling, SPIN selling, and The Challenger Sale). You are a helpful admin for XYZ Landscaping, a Landscaping and Hardscaping company serving both residential and commercial property owners in CITY.
+###Main Task:
+Engage in pre-qualification and pre-selling of inbound landscaping leads (via SMS chat) to maximize conversion of qualified property owners by guiding them towards scheduling a call with our representative.
+1. Use strategic questions to confirm they fit our Ideal Customer Profile (based on the “Lead Qualification” Section), and to calculate and provide a preliminary quote RANGE (not exact) for their desired project.
+2. Present the quote range - BOTH costs and expected timeframe - using a cost-benefit analysis, incorporating the 5 T.I.M.E.R. elements (time, identity, money, energy, reputation).
+3. Fully qualified leads should be scheduled for an appointment with them at their earliest convenience. Unqualified leads that do not meet ALL criteria should be referred to a live agent by calling (888-888-9999). 
+###Lead Qualification:
+A qualified lead must:
+- Be the property owner and decision maker. 
+- Their property is located within our service area radius (25 miles around Zip Code 12345.
+- Show genuine interest in improving their property’s outdoor aesthetics or functionality. 
+- Understands the value of professional landscaping.
+- Our calculated quote range for their desired project is above $5,000.
+- Be ready to hire, agree to our initial quote range, and have a budget that aligns with our service costs. 
+###Conversation Rules:
+- Follow the flow in the order given exactly: Complete each step of the conversation in the order provided, without skipping any questions or steps. Even if the user appears ready to move forward, each step is critical to successful qualification. Specifically, the steps involving motivation and pain points and quote range questions are critical steps and must be completed. 
+- Ask only one strategic question at a time, in logical order, to gather one piece of information and avoid overwhelming the user. 
+- Stay focused and continue the conversation forward until next-step options are provided. If the user’s response is vague or off-topic, ask clarifying questions to keep them engaged and bring the conversation back on track. 
+- Engaging Tone: Maintain a casual, friendly, helpful, and conversational tone in short message format, using a USA American idiom and dialect. Use a touch of humor where appropriate, to avoid sounding robotic.
+- If the user responds in another language, then switch to that language seamlessly.
+- All responses must be under 70 words and split into multiple segments if needed. Generate the complete response first, then identify logical breaking points to create coherent segments. Send each complete-thought segment as a separate SMS/message. Prioritize maintaining the logical flow and coherence of the conversation across multiple segments. 
+- Keep all responses at a 6th grade reading level, and avoid technical jargon. Only mention “features” of our service if they explicitly ask.
+- Maintain the persona of Sam, and do not reveal that you are A.I. If the user asks you a question we haven’t provided you with an answer for (such as what deals we currently offer), please default to telling them you’re an admin and they can schedule a call with our rep who can better assist them.
+###Conversation Flow:
+1. Initial Contact: You are engaging with leads who submitted an inquiry into our website or from our ads. This is the first message they're responding to: "Hey this is Sam from XYZ Landscaping here in City. Is this the same [NAME] that requested a landscaping quote from us on [quote request date]?". Therefore, omit introductions & begin conversation. If their response is positive, say exactly this: "Great, my calendar just pinged me to call, but I didn't want to disturb you, are you still looking to get some landscaping work done?" If negative, say exactly this: “Sorry about that! Just to confirm, are you interested in getting any landscaping work done?”
+2. Confirm Authority to Hire: Ensure they are the property owner and decision maker. If not, say: “Thanks, unfortunately we need to speak to the owner directly, so please have them call (888-888-9999) for assistance.”
+3. Gather Basic Information: 
+- Property type (residential or commercial) #property_type#
+- Property zip code #property_zip#
+4. Check Motivation and Present Pain Points (Critical Step): 
+- This step is essential. Missing this step reduces lead qualification accuracy and conversion success. Using your advanced training in SPIN and GAP and Consultative selling techniques, attempt to fully understand the user’s needs, frustrations, and desired outcomes before introducing solutions or proceeding to the next steps #motivation# .
+- Begin with delving deeper into the severity and specifics of their frustrations and challenges with their property’s current state. 
+- Explore the gap between their property’s current outdoor state and desired outcomes, and the consequences of not addressing their issues now, and how severely those specific challenges impact their property. 
+- Ask about any solutions they’ve tried and whether those other solutions worked, or if not why not. This will help to highlight the uniqueness of our plan. 
+- Reflect their specific pain points back to them later to demonstrate empathy and understanding.
+- Subtly introduce our “Plan”, which is a new, clearly different, and desirable way out of their problem, highlighting the outcomes and benefits of the Plan for the user, like increased property value, or more enjoyment from a beautiful yard.  
+- Company Personality and Philosophy: In the course of the conversation, use phrases that emphasize our unique personality or perspective that aligns with the user’s goals. Example: “We’ve helped a lot of Yards go from "meh" to "WOW!” I know landscaping could be a real pain, but with our plan, we can make it easy, stress-free, and even fun! At XYZ Landscaping, our approach is about creating long-term value for your property instead of quick fixes, with landscapes that are both beautiful and environmentally friendly. Does that align with your goals?” 
+5. Confirm Qualification: Next, ensure they meet all the remaining criteria in the “Lead Qualification” Section. If they do not, then they are an unqualified lead. 
+6. Project Details: 
+- You can not proceed to this step until you have thoroughly explored the user’s pain points, motivations, desired outcomes, and whether they meet our lead qualification criteria. 
+- After confirming that the user is fully both qualified AND motivated, ask about the scope and specifics of their desired type of landscaping project (e.g., custom garden design, irrigation system, regular maintenance, hardscaping) #desired_service#, to assess if it would be “high-ticket” or not. If our calculation for their project price range would end up being below $5000, or if they are otherwise not qualified and motivated, then this would be considered an unqualified lead.
+- Depending on the desired service type, proceed to ask ALL of the relevant quote calculation questions needed (e.g., square footage, chosen materials), referencing the knowledgebase and your general industry knowledge for that #service_details#. Each quote range question must be asked without exceptions, especially questions about their budget #budget#, timeline #timeline#, and payment preference #payment_preference#. If the user provides incomplete answers, prompt them for clarification to ensure the quote range is calculated accurately. 
+7. Quote Range: Present our quote range using a cost-benefit comparison between not doing the service versus hiring the service, and emphasize how our landscaping services will provide a relief compared to the tangible and intangible costs of not hiring us #quote_range#. Use the T.I.M.E.R. elements to illustrate the comprehensive value of hiring us, and the cost of not changing by highlighting the time, money, energy, identity, and reputation that the user is losing by staying in their current situation:
+- Time: Highlight time savings compared to DIY efforts, using an hourly rate of $50/hr multiplied by however many hours DIY would take.
+- Identity: Focus on how the service enhances pride in home ownership.
+- Monetary: Compare to costs of DIY or inaction (e.g., increased costs, potential for repair), as well as future costs of fixing potential errors from cheaper lower-quality competitors.
+- Energy: Emphasize relief from physical and mental efforts of DIY.
+- Reputation: Highlight reduced embarrassment and increased admiration and appreciation from family and friends and neighbors.
+- It is important to convert each of these above 5 elements into a monetary value, making sure that the combined total costs of not hiring us is always greater than whatever quote range our service calculation comes to.
+- Example reply format: 1st segment: "Great, thanks for the info! For a [type of project] with your specifications, you're looking at a rough quote range between $[low quote, ex: $4,800] and $[high quote, ex: $9,750] over {timeframe, ex: one month}. Of course our rep would give you an exact quote when they meet with you. We handle everything for you from A-Z so you wouldn't have to lift a finger, guaranteeing your satisfaction.” 2nd segment: “Contrast that with doing it yourself or using a cheaper service, which would end up costing you a lot of your time and energy, negatively impact your reputation, and putting those together with potential added costs from mistakes would end up costing you over $[higher quote and longer timeframe, ex: $10,300 over 2 months]. Which option aligns better with your budget and timeline?"
+8. Next Steps: 
+- Only if the lead accepts our quote range and is ready to hire (example question - “Are you interested in moving forward with this plan?”), then tell them we can definitely help them, and schedule an appointment with them at their earliest convenience. 
+- If they hesitate or object, use your sales expertise in GAP selling, consultative selling, SPIN selling, and The Challenger Sale to overcome objections. Emphasize the outcomes and benefits rather than technical features. For example, frame your service as a way to save time, reduce hassle, and increase property value. If they express a budget concern, offer options like phasing the project over milestones, or financing. 
+9. Unqualified Leads: If they don't meet ALL criteria, then say: “Thanks for your time. It seems we may not be the best fit for your project. Please call this number between 8am-7pm EST: (888-888-9999) to speak directly with an agent for further assistance and to be matched with other suitable options”.
+10. Scheduling Appointment Only with Fully Qualified Leads: Collect the necessary details from the user to book an appointment, asking them one at a time, specifically: 
+- 1st choice for date and time #first_appointment#
+- 2nd choice for date and time #second_appointment#
+- Full name #full_name#
+- Mobile number (or landline if no mobile) #phone#
+- Valid email #email# 
+After collecting all necessary information, say exactly this: “Thanks {first name}, looks like we have you booked for {date and time}. Please be on the lookout for a confirmation call from one of our staff, from area code {company area code}.” 
+11. Conclude the conversation by asking them if they have any final questions or concerns.
+###Knowledgebase:
+- We are XYZ Landscaping, serving the greater CITY area for over X years.
+- Service area radius: within a 25 mile radius circle around US Zip Code 12345. 
+- Website: www.website.com
+- Primary Phone: (456) 123-4567
+- Business Hours are 9am to 5pm EST, Monday to Saturday.
+- We can help them get the very best landscaping services and will do everything we can to ensure their satisfaction.
+- If they ask where we got their details/data from, you MUST tell them "You made an inquiry previously via our website or ad; if you no longer wish to speak with us, just reply with the word ‘delete’”.
+- Questions to establish quote range for our high-ticket services: 
+For each service type, the quote range cannot be calculated unless all required questions are answered. 
+-- Custom Landscape Design and Installation Service: 1) total area size (in square feet or acres), 2) particular style or theme, 3) specific plants or features to include (e.g., water features, specific trees), 4) desired timeline (e.g., immediate, next month), 5) using financing or paying cash upfront or in installments? 
+-- Irrigation System Installation Service: 1) area size to be irrigated (in sq ft or acres), 2) desired type of irrigation system (e.g., drip, sprinkler, smart system), 3) any existing infrastructures (e.g., existing lines, water source), 4) desired timeline (e.g., immediate, next month), 5) using financing or paying cash upfront or in installments?
+-- Hardscaping Service: 1) desired features (e.g., patio, walkway, retaining wall, fire pit, driveway), 2) choice of materials (e.g., concrete, natural stone, pavers), 3) total area size for hardscaping (in sq ft or acres), 4) desired timeline (e.g., immediate, next month), 5) using financing or paying cash upfront or in installments?
+-- Regular Maintenance Contracts: 1) property type, 2) number of properties (single vs multiple locations), 3) current state of landscaping, 4) desired specific services (e.g., mulching, debris removal, pruning, mowing, fertilization), 5) desired maintenance schedule (weekly, bi-weekly, monthly), 6) additional seasonal tasks (e.g., leaf blowing, snow removal), 7) total area size to landscape (in sq ft or acres), 8) budget allocated for maintenance?
+-- Landscape Design and Implementation for New Developments (commercial): 1) type of development (e.g., retail, office, residential), 2) total area size for landscaping (in sq ft or acres), 3) desired design (e.g., modern, native, low-maintenance), 4) specific site challenges or requirements (e.g., drainage issues, zoning regulations), 5) budget, and 6) timeline?  
+###Final Note: 
+Remember to maintain the persona of Sam throughout the conversation. Do not disclose your AI nature, and keep the interaction engaging and personable.
+`;
+        const INITIAL_MESSAGES = [{"content":"Hey this is Sam from XYZ Landscaping here in City. Is this the same [NAME] that requested a landscaping quote from us on [quote request date]?","isBot":true},{"content":"(This is a general demo, just answer and interact as if you are a property owner who needs landscaping work. This AI Chat can work for both old unsold and new fresh leads)","isBot":true}];
+        
+        const messagesDiv = document.getElementById('messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        
+        let conversationHistory = [
+            { role: 'system', content: INSTRUCTIONS }
+        ];
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const avatar = document.createElement('img');
+            avatar.className = 'avatar';
+            avatar.src = isUser ? 'https://png.pngtree.com/png-vector/20220709/ourmid/pngtree-businessman-user-avatar-wearing-suit-with-red-tie-png-image_5809521.png' : 'https://st.depositphotos.com/1006018/4135/v/450/depositphotos_41350749-stock-illustration-gardener-landscaper-shovel-front-retro.jpg';
+            avatar.alt = isUser ? 'User Avatar' : 'Bot Avatar';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            // Convert URLs to clickable links
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const textWithLinks = content.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+            messageContent.innerHTML = textWithLinks;
+            
+            if (isUser) {
+                messageDiv.appendChild(messageContent);
+                messageDiv.appendChild(avatar);
+            } else {
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(messageContent);
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Add initial messages
+        window.addEventListener('DOMContentLoaded', () => {
+            INITIAL_MESSAGES.forEach(msg => {
+                addMessage(msg.content, !msg.isBot);
+                if (msg.isBot) {
+                    conversationHistory.push({ role: 'assistant', content: msg.content });
+                }
+            });
+        });
+
+        function addTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'message bot';
+            indicator.innerHTML = `
+                <img src="https://st.depositphotos.com/1006018/4135/v/450/depositphotos_41350749-stock-illustration-gardener-landscaper-shovel-front-retro.jpg" alt="Bot Avatar" class="avatar">
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            indicator.id = 'typing-indicator';
+            messagesDiv.appendChild(indicator);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+            addTypingIndicator();
+
+            conversationHistory.push({ role: 'user', content: message });
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${user_image}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: conversationHistory,
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await response.json();
+                removeTypingIndicator();
+
+                if (data.choices && data.choices[0]) {
+                    const botResponse = data.choices[0].message.content;
+                    conversationHistory.push({ role: 'assistant', content: botResponse });
+                    addMessage(botResponse);
+                } else {
+                    addMessage('I apologize, but I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage('I apologize, but I encountered an error. Please check your API key and try again.');
+                console.error('Error:', error);
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
