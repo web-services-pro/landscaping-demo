@@ -174,25 +174,27 @@ Remember to maintain the persona of Sam throughout the conversation. Do not disc
         function removeTypingIndicator() {  }
 
         async function sendMessage() {
-            if (!GEMINI_API_KEY) { addMessage("API Key is not configured correctly. Please check the source file."); return; }
             const message = userInput.value.trim();
             if (!message) return;
+    
             addMessage(message, true);
             userInput.value = '';
             addTypingIndicator();
+    
             try {
                 conversationHistory.push({ role: 'user', parts: [{ text: message }] });
-                const response = await fetch("/api/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userInput }] }]
-                    })
+        
+                // 1. Point directly to your secure Vercel proxy route
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    // 2. We send the conversation history straight to our backend proxy
+                    body: JSON.stringify({ contents: conversationHistory }) 
                 });
+        
                 const data = await response.json();
                 removeTypingIndicator();
+        
                 if (data.candidates && data.candidates[0]) {
                     const botResponse = data.candidates[0].content.parts[0].text;
                     addMessage(botResponse);
@@ -202,7 +204,7 @@ Remember to maintain the persona of Sam throughout the conversation. Do not disc
                 }
             } catch (error) {
                 removeTypingIndicator();
-                addMessage("Error: Could not connect to Gemini API. Check your API key and internet connection.");
+                addMessage("Error: Could not connect to Gemini API. Please check backend configuration.");
                 console.error('Error:', error);
             }
         }
