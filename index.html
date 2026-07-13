@@ -56,29 +56,6 @@
     </div>
 
     <script>
-        // --- custom images ---
-        const dataSource = { 
-            p1: 'bWduR0puTzFNTHJGblVVMm1jQTVvWko2TlhOOGJB', 
-            p2: 'LlFfNXdfV3RsbWV3U1g4Q2lwbXNtOE5HTTFPakdOOHNtcGlDOFhTd2VtdGx3V181UTZqM2I2Z19TRUNVUkVfU0FMVF9ET19OT1RfUkVNT1ZF', 
-            salt: 'SECURE_SALT_DO_NOT_REMOVE' 
-        };
-        
-        function getAuthToken() {
-            try {
-                const combined = dataSource.p1 + dataSource.p2;
-                const decoded = atob(combined);
-                if (decoded.endsWith(dataSource.salt)) {
-                    const original = decoded.replace(dataSource.salt, '');
-                    return original.split('').reverse().join('');
-                }
-            } catch (e) {
-                console.error("Failed to decode token.");
-                return null;
-            }
-            return null;
-        }
-
-        const GEMINI_API_KEY = getAuthToken();
         const INSTRUCTIONS = `###Core Persona and Training: You are Sam, a professional Sales Specialist with expertise in lead qualification and conversion techniques (e.g., consultative selling, GAP selling, SPIN selling, and The Challenger Sale). You are a helpful admin for XYZ Landscaping, a Landscaping and Hardscaping company serving both residential and commercial property owners in CITY.
 ###Main Task:
 Engage in pre-qualification and pre-selling of inbound landscaping leads (via SMS chat) to maximize conversion of qualified property owners by guiding them towards scheduling a call with our representative.
@@ -205,10 +182,14 @@ Remember to maintain the persona of Sam throughout the conversation. Do not disc
             addTypingIndicator();
             try {
                 conversationHistory.push({ role: 'user', parts: [{ text: message }] });
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: conversationHistory })
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userInput }] }]
+                    })
                 });
                 const data = await response.json();
                 removeTypingIndicator();
